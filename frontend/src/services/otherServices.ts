@@ -1,6 +1,30 @@
 import api from './api'
 import type { Official, Announcement, Event, PaginatedResponse } from '../types'
 
+// Helper function to clean data before sending to API
+const cleanDataWithDates = (data: Record<string, unknown>, dateFields: string[]): Record<string, unknown> => {
+  const cleaned: Record<string, unknown> = {}
+  
+  Object.entries(data).forEach(([key, value]) => {
+    // Skip empty strings, undefined, and null values for optional fields
+    if (value === '' || value === undefined || value === null) {
+      return
+    }
+    
+    // Handle date fields - convert empty or invalid dates to null
+    if (dateFields.includes(key)) {
+      if (value && !isNaN(Date.parse(String(value)))) {
+        cleaned[key] = value
+      }
+      return
+    }
+    
+    cleaned[key] = value
+  })
+  
+  return cleaned
+}
+
 // Officials Service
 export const officialService = {
   getAll: async (params?: { is_current?: boolean; position?: string }): Promise<Official[]> => {
@@ -17,12 +41,14 @@ export const officialService = {
   },
 
   create: async (data: Partial<Official>): Promise<Official> => {
-    const response = await api.post('/officials', data)
+    const cleanedData = cleanDataWithDates(data as Record<string, unknown>, ['term_start', 'term_end'])
+    const response = await api.post('/officials', cleanedData)
     return response.data.official || response.data
   },
 
   update: async (id: number, data: Partial<Official>): Promise<Official> => {
-    const response = await api.put(`/officials/${id}`, data)
+    const cleanedData = cleanDataWithDates(data as Record<string, unknown>, ['term_start', 'term_end'])
+    const response = await api.put(`/officials/${id}`, cleanedData)
     return response.data.official || response.data
   },
 
@@ -63,12 +89,14 @@ export const announcementService = {
   },
 
   create: async (data: Partial<Announcement>): Promise<Announcement> => {
-    const response = await api.post('/announcements', data)
+    const cleanedData = cleanDataWithDates(data as Record<string, unknown>, ['publish_date', 'expiry_date'])
+    const response = await api.post('/announcements', cleanedData)
     return response.data.announcement || response.data
   },
 
   update: async (id: number, data: Partial<Announcement>): Promise<Announcement> => {
-    const response = await api.put(`/announcements/${id}`, data)
+    const cleanedData = cleanDataWithDates(data as Record<string, unknown>, ['publish_date', 'expiry_date'])
+    const response = await api.put(`/announcements/${id}`, cleanedData)
     return response.data.announcement || response.data
   },
 
@@ -112,12 +140,14 @@ export const eventService = {
   },
 
   create: async (data: Partial<Event>): Promise<Event> => {
-    const response = await api.post('/events', data)
+    const cleanedData = cleanDataWithDates(data as Record<string, unknown>, ['start_date', 'end_date', 'registration_deadline'])
+    const response = await api.post('/events', cleanedData)
     return response.data.event || response.data
   },
 
   update: async (id: number, data: Partial<Event>): Promise<Event> => {
-    const response = await api.put(`/events/${id}`, data)
+    const cleanedData = cleanDataWithDates(data as Record<string, unknown>, ['start_date', 'end_date', 'registration_deadline'])
+    const response = await api.put(`/events/${id}`, cleanedData)
     return response.data.event || response.data
   },
 

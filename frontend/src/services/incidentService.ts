@@ -12,6 +12,31 @@ export interface IncidentFilters {
   limit?: number
 }
 
+// Helper function to clean data before sending to API
+const cleanIncidentData = (data: Partial<Incident>): Record<string, unknown> => {
+  const cleaned: Record<string, unknown> = {}
+  const dateFields = ['incident_date', 'hearing_date', 'resolution_date']
+  
+  Object.entries(data).forEach(([key, value]) => {
+    // Skip empty strings, undefined, and null values for optional fields
+    if (value === '' || value === undefined || value === null) {
+      return
+    }
+    
+    // Handle date fields - convert empty or invalid dates to null
+    if (dateFields.includes(key)) {
+      if (value && !isNaN(Date.parse(String(value)))) {
+        cleaned[key] = value
+      }
+      return
+    }
+    
+    cleaned[key] = value
+  })
+  
+  return cleaned
+}
+
 export const incidentService = {
   getAll: async (filters: IncidentFilters = {}): Promise<PaginatedResponse<Incident>> => {
     const params = new URLSearchParams()
@@ -30,12 +55,14 @@ export const incidentService = {
   },
 
   create: async (data: Partial<Incident>): Promise<Incident> => {
-    const response = await api.post('/incidents', data)
+    const cleanedData = cleanIncidentData(data)
+    const response = await api.post('/incidents', cleanedData)
     return response.data.incident || response.data
   },
 
   update: async (id: number, data: Partial<Incident>): Promise<Incident> => {
-    const response = await api.put(`/incidents/${id}`, data)
+    const cleanedData = cleanIncidentData(data)
+    const response = await api.put(`/incidents/${id}`, cleanedData)
     return response.data.incident || response.data
   },
 

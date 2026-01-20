@@ -12,6 +12,36 @@ export interface DocumentFilters {
   limit?: number
 }
 
+// Helper function to clean data before sending to API
+const cleanDocumentData = (data: Partial<Document>): Record<string, unknown> => {
+  const cleaned: Record<string, unknown> = {}
+  
+  Object.entries(data).forEach(([key, value]) => {
+    // Skip empty strings, undefined, and null values
+    if (value === '' || value === undefined || value === null) {
+      return
+    }
+    
+    // Handle date fields - convert empty or invalid dates to null
+    if (['valid_until', 'issued_date', 'pickup_date', 'request_date'].includes(key)) {
+      if (value && !isNaN(Date.parse(String(value)))) {
+        cleaned[key] = value
+      }
+      return
+    }
+    
+    // Handle amount field - map to amount_paid
+    if (key === 'amount') {
+      cleaned['amount_paid'] = value || 0
+      return
+    }
+    
+    cleaned[key] = value
+  })
+  
+  return cleaned
+}
+
 export const documentService = {
   getAll: async (filters: DocumentFilters = {}): Promise<PaginatedResponse<Document>> => {
     const params = new URLSearchParams()
@@ -30,7 +60,14 @@ export const documentService = {
   },
 
   create: async (data: Partial<Document>): Promise<Document> => {
-    const response = await api.post('/documents', data)
+    const cleanedData = cleanDocumentData(data)
+    const response = await api.post('/documents', cleanedData)
+    return response.data.document || response.data
+  },
+
+  update: async (id: number, data: Partial<Document>): Promise<Document> => {
+    const cleanedData = cleanDocumentData(data)
+    const response = await api.put(`/documents/${id}`, cleanedData)
     return response.data.document || response.data
   },
 

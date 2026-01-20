@@ -10,6 +10,31 @@ export interface BusinessFilters {
   limit?: number
 }
 
+// Helper function to clean data before sending to API
+const cleanBusinessData = (data: Partial<Business>): Record<string, unknown> => {
+  const cleaned: Record<string, unknown> = {}
+  const dateFields = ['date_established']
+  
+  Object.entries(data).forEach(([key, value]) => {
+    // Skip empty strings, undefined, and null values for optional fields
+    if (value === '' || value === undefined || value === null) {
+      return
+    }
+    
+    // Handle date fields - convert empty or invalid dates to null
+    if (dateFields.includes(key)) {
+      if (value && !isNaN(Date.parse(String(value)))) {
+        cleaned[key] = value
+      }
+      return
+    }
+    
+    cleaned[key] = value
+  })
+  
+  return cleaned
+}
+
 export const businessService = {
   // Businesses
   getAll: async (filters: BusinessFilters = {}): Promise<PaginatedResponse<Business>> => {
@@ -29,12 +54,14 @@ export const businessService = {
   },
 
   create: async (data: Partial<Business>): Promise<Business> => {
-    const response = await api.post('/businesses', data)
+    const cleanedData = cleanBusinessData(data)
+    const response = await api.post('/businesses', cleanedData)
     return response.data.business || response.data
   },
 
   update: async (id: number, data: Partial<Business>): Promise<Business> => {
-    const response = await api.put(`/businesses/${id}`, data)
+    const cleanedData = cleanBusinessData(data)
+    const response = await api.put(`/businesses/${id}`, cleanedData)
     return response.data.business || response.data
   },
 

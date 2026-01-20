@@ -200,8 +200,10 @@ export default function Users() {
                     <td>{getRoleBadge(user.role)}</td>
                     <td>{user.barangay?.name || '-'}</td>
                     <td>
-                      {user.is_active ? (
+                      {user.status === 'active' ? (
                         <span className="badge badge-green">Active</span>
+                      ) : user.status === 'suspended' ? (
+                        <span className="badge badge-yellow">Suspended</span>
                       ) : (
                         <span className="badge badge-red">Inactive</span>
                       )}
@@ -216,13 +218,13 @@ export default function Users() {
                         <button
                           onClick={() => handleToggleStatus(user.id)}
                           className={`p-2 rounded-lg ${
-                            user.is_active
+                            user.status === 'active'
                               ? 'text-gray-500 hover:text-red-600 hover:bg-red-50'
                               : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
                           }`}
-                          title={user.is_active ? 'Deactivate' : 'Activate'}
+                          title={user.status === 'active' ? 'Deactivate' : 'Activate'}
                         >
-                          {user.is_active ? (
+                          {user.status === 'active' ? (
                             <ShieldExclamationIcon className="w-5 h-5" />
                           ) : (
                             <ShieldCheckIcon className="w-5 h-5" />

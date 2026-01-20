@@ -77,6 +77,28 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+// Role-based Route Guard Component
+function RoleGuard({ 
+  children, 
+  allowedRoles 
+}: { 
+  children: React.ReactNode
+  allowedRoles: string[] 
+}) {
+  const { user } = useAuthStore()
+  
+  if (!user || !allowedRoles.includes(user.role)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+        <p className="text-gray-500">You don't have permission to access this page.</p>
+      </div>
+    )
+  }
+  
+  return <>{children}</>
+}
+
 function App() {
   return (
     <Routes>
@@ -123,12 +145,18 @@ function App() {
         <Route path="/events/:id" element={<EventForm />} />
         <Route path="/events/:id/edit" element={<EventForm />} />
         <Route path="/reports" element={<Reports />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/users/new" element={<UserForm />} />
-        <Route path="/users/:id" element={<UserForm />} />
-        <Route path="/users/:id/edit" element={<UserForm />} />
-        <Route path="/barangays" element={<Barangays />} />
-        <Route path="/settings" element={<Settings />} />
+        
+        {/* Admin & Super Admin only routes */}
+        <Route path="/users" element={<RoleGuard allowedRoles={['admin', 'super_admin']}><Users /></RoleGuard>} />
+        <Route path="/users/new" element={<RoleGuard allowedRoles={['admin', 'super_admin']}><UserForm /></RoleGuard>} />
+        <Route path="/users/:id" element={<RoleGuard allowedRoles={['admin', 'super_admin']}><UserForm /></RoleGuard>} />
+        <Route path="/users/:id/edit" element={<RoleGuard allowedRoles={['admin', 'super_admin']}><UserForm /></RoleGuard>} />
+        
+        {/* Super Admin only routes */}
+        <Route path="/barangays" element={<RoleGuard allowedRoles={['super_admin']}><Barangays /></RoleGuard>} />
+        
+        {/* Admin & Super Admin Settings */}
+        <Route path="/settings" element={<RoleGuard allowedRoles={['admin', 'super_admin']}><Settings /></RoleGuard>} />
         <Route path="/profile" element={<Profile />} />
       </Route>
 
